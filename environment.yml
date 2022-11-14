@@ -1,7 +1,8 @@
 dependencies:
   - bokeh
   - pandas
-  - scipy
+  - networkx
+  - itertools
   - pip
   - pip:
     - jupyter-server-proxy
