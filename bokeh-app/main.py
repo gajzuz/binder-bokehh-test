@@ -1,49 +1,26 @@
-# Libarary imports
+# Library imports
+
 # System paths
 from os.path import join, dirname
 
 # Data wrangling
 import pandas as pd
-import numpy as np
-# import matplotlib.pyplot as plt
 
 # Network graph 
-from itertools import combinations_with_replacement    # 
-import networkx as nx                                  # graphing
-from networkx.algorithms import community              # address community via nx.algorithms.communinty (if needed at all)
+from itertools import combinations_with_replacement     
+import networkx as nx                                  
+from networkx.algorithms import community            
 
-# Interactive visualizations in browser     # Check which ones are necessary!!!
-from bokeh.io import output_file, show, save, curdoc
+# Interactive visualizations in browser     
+from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, CustomJS
-from bokeh.palettes import Blues8, Viridis8
+from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, ColorBar, CustomJS
+from bokeh.palettes import Blues8
 from bokeh.plotting import figure, from_networkx
 from bokeh.transform import linear_cmap
 
-# LOGICS:
-
-# Define functions:
-# 1. function converting the data to edge dataset -> needs to take clustering criterion from Select as input
-# 2. function for creating the network and appending the desired node attributes to its source 
-# 3. function for creating a DataTable out of the node source table (the same information as hover)
-# 4. function for linear mapping of color and node size (hopefully avoiding the communities?)
-# 5. function for plotting the network (shall take size and color from the select)
-
-# Widgets:
-# 1. Select: clustering, size, color (on change events)
-# 2. DataTable: (update upon hovering)
-# 3. 
-
-# IF FANCY: click on the node -> link to the publication
-
-# CODE:
-
 # GLOBAL CONSTANTS
 COLUMN_AUTHORS = 'Authors'
-
-# # GLOBAL VARIABLES 
-# global plot
-# plot = figure()
 
 # FUNCTIONS:
 
@@ -138,7 +115,7 @@ def create_network (df: pd.DataFrame, df_edges: pd.DataFrame, publication_attrib
     return G
 
 
-def plot_network (G: nx.Graph, title: str, node_size_attr: str, node_color_attr: str, color_palette: str):
+def plot_network (G: nx.Graph, title: str, node_size: int, node_color_attr: str, color_palette: str):
     """ Uses criterion (taken from a widget) to create an edge dataframe ready for network graphing
     
     Parameters
@@ -149,10 +126,10 @@ def plot_network (G: nx.Graph, title: str, node_size_attr: str, node_color_attr:
     title                    : str
                              title of the plot
 
-    node_size_attr           : str
+    node_size           : int
                              attribute defining the node size  
 
-    node_size_attr           : str
+    node_color           : str
                              attribute defining the node color
 
     color_palette            : str
@@ -171,12 +148,12 @@ def plot_network (G: nx.Graph, title: str, node_size_attr: str, node_color_attr:
                   y_range=Range1d(-1.3, 1.3),
                   title=title)
 
-    network_graph = from_networkx(G, nx.spring_layout(G, k=0.6, seed = 8), scale=8, center=(0, 0))   # potentially remove scale
+    network_graph = from_networkx(G, nx.fruchterman_reingold_layout(G, seed = 8), scale=8, center=(0, 0))   # potentially remove scale
 
     #Set node size and color
     minimum_value_color = min(network_graph.node_renderer.data_source.data[node_color_attr])
     maximum_value_color = max(network_graph.node_renderer.data_source.data[node_color_attr])
-    network_graph.node_renderer.glyph = Circle(size=node_size_attr, fill_color=linear_cmap(node_color_attr, color_palette, minimum_value_color, maximum_value_color))
+    network_graph.node_renderer.glyph = Circle(size=node_size, fill_color=linear_cmap(node_color_attr, color_palette, minimum_value_color, maximum_value_color))
     
     #Set edge opacity and width
     network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.5, line_width=1)
@@ -196,19 +173,17 @@ def plot_network (G: nx.Graph, title: str, node_size_attr: str, node_color_attr:
 def update_plot (attrname, old, new):
     cluster_criterion = select_clustering.value
     plot.title.text = "LIBS publications clustered according to: " + cluster_criterion
-    df_LIBS_edges = generate_edges(df_LIBS, cluster_criterion)
-    #print(df_LIBS_edges)
-    G = create_network(df_LIBS, df_LIBS_edges, NODE_ATTRIBUTES)
-    #print(G._node)
-    network_graph = from_networkx(G, nx.spring_layout(G, k=0.6, seed = 8), scale=8, center=(0, 0))   # potentially remove scale
     
+    #pack in a function plot_callback
+    df_LIBS_edges = generate_edges(df_LIBS, cluster_criterion)
+    G = create_network(df_LIBS, df_LIBS_edges, NODE_ATTRIBUTES)
+    network_graph = from_networkx(G, nx.fruchterman_reingold_layout(G, seed = 8), scale=8, center=(0, 0))   # potentially remove scale
     minimum_value_color = min(network_graph.node_renderer.data_source.data[color_attribute])
     maximum_value_color = max(network_graph.node_renderer.data_source.data[color_attribute])
-    network_graph.node_renderer.glyph = Circle(size=size_attribute, fill_color=linear_cmap(color_attribute, color_palette, minimum_value_color, maximum_value_color))
-   
+    network_graph.node_renderer.glyph = Circle(size=node_size, fill_color=linear_cmap(color_attribute, color_palette, minimum_value_color, maximum_value_color))
+    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.5, line_width=1)
     plot.renderers = []
     plot.renderers.append(network_graph)    
-    
     #Add Labels
     x, y = zip(*network_graph.layout_provider.graph_layout.values())
     node_labels = list(G.nodes())
@@ -221,42 +196,30 @@ def update_plot (attrname, old, new):
 #***************
 
 # Constants
-NODE_ATTRIBUTES = ['Citationsadj', 'Year', 'Application', 'Field', 'Classes', 'Preprocessing',
-                   'Spectral region', 'Classification', 'Classifiers tried', 'Classification details',
-                   'Model validation', 'Validation internal']
+NODE_ATTRIBUTES = ['Year', 'Application', 'Materials', 'Nr classes', 'Classes', 'Preprocessing',
+                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification',
+                   'Best model', 'Validation internal', 'Validation external', 'Software']
 
-HOVER_TOOLTIPS = [("Publication", "@index"), 
-                  ("Application", "@application"), 
-                  ("Samples", "@field"), 
-                  ("Classes", "@classes"), 
-                  ("Preprocessing", "@preprocessing"), 
-                  ("Spectral input", "@spectral_region"), 
-                  ("Classifiers employed", "@classifiers_tried"), 
-                  ("Best model", "@classification_details"),
-                  ("Validation", "@model_validation"),
-                  ("Performance", "@validation_internal")
-                  ]
+HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x != 'Year']
+
 
 HOVER_TOOLS = ["pan,wheel_zoom,save,reset, lasso_select"]
 
 SEED = 8
 
-# automatized:  HOVER_TOOLTIPS 
-# [("Publication", "@index")] + [(x, '@'+x.lower()) for x in NODE_ATTRIBUTES if x != 'Citationsadj']
 plot_title = 'LIBS classification publications'
-cluster_criterion = 'Year'
-size_attribute = 'citationsadj'
+cluster_criterion = 'Application'
+node_size = 15
 color_attribute = 'year'
 color_palette = Blues8
 
 # Displayed widget values 
-select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x for x in NODE_ATTRIBUTES if x != 'Citationsadj'])
-select_sizing = Select(value=size_attribute, title='Node size according to:', options=['Citationsadj'])
+select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x.replace('_', ' ') for x in NODE_ATTRIBUTES])
+#select_sizing = Select(value=node_size, title='Node size according to:', options=['Constant'])
 select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
 
-# Load the data # google how to make this universal
-# df = pd.read_csv(join(dirname(__file__)), 'data\LIBS_overview.csv.csv')   
-df_LIBS = pd.read_csv(join(dirname(__file__),'LIBS_overview_exp.csv'), delimiter=';') 
+# Load the data
+df_LIBS = pd.read_csv(join(dirname(__file__),'LIBS_overview_final.csv'), delimiter=';') 
 
 # Cluster publications according to the select -> !!! add select as input argument
 df_LIBS_edges = generate_edges(df_LIBS, cluster_criterion)
@@ -264,10 +227,8 @@ df_LIBS_edges = generate_edges(df_LIBS, cluster_criterion)
 # Create the network 
 G = create_network(df_LIBS, df_LIBS_edges, NODE_ATTRIBUTES)
 
-# Create table from the node dictionary :)!!!!
-
 # Plot the network
-plot = plot_network(G, plot_title, size_attribute, color_attribute, color_palette)
+plot = plot_network(G, plot_title, node_size, color_attribute, color_palette)
 
 select_clustering.on_change('value', update_plot)
 
@@ -276,11 +237,7 @@ select_clustering.on_change('value', update_plot)
 #     console.log('select: value=' + this.value, this.toString())
 # """))
 
-controls = column(select_clustering, select_sizing, select_coloring)
+controls = column(select_clustering, select_coloring)
 
 curdoc().add_root(row(plot, controls))
 curdoc().title = "LIBS"
-
-#show(row(plot, controls))
-#output_file('test.html')
-#save(plot, filename=f"{plot_title}.html")
