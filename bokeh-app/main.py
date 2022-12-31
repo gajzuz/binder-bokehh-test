@@ -4,12 +4,12 @@
 from os.path import join, dirname
 
 # Data wrangling
+from statistics import mean
 import pandas as pd
 
 # Network graph 
 from itertools import combinations_with_replacement     
 import networkx as nx                                  
-from networkx.algorithms import community            
 
 # Interactive visualizations in browser     
 from bokeh.io import curdoc
@@ -65,7 +65,22 @@ def add_node_attributes (df: pd.DataFrame, publication_attribute: list, G: nx.Gr
     """
     dict_auth_attr = create_dict_author_attribute(df, publication_attribute)
     nx.set_node_attributes(G, name=publication_attribute.lower().replace(" ", "_"), values=dict_auth_attr)  
+   
 
+def allocate_clusters (label_cluster: str, x: list, y:list, cluster_labels_all:list):
+    indices = [i for i in range(len(cluster_labels_all)) if cluster_labels_all[i]==label_cluster]
+    range_x = abs(abs(min([x[i] for i in indices])) - abs(max([x[i] for i in indices])))
+    if len(indices) == 1:
+        cluster_x = mean([x[i] for i in indices])-0.05
+    else:
+        cluster_x = mean([x[i] for i in indices])-range_x
+    range_y = abs(abs(min([y[i] for i in indices])) - abs(max([y[i] for i in indices])))
+    if len(indices) == 1:
+        cluster_y = mean([y[i] for i in indices])+0.05
+    else:
+        cluster_y = mean([y[i] for i in indices])+range_y
+    return [label_cluster, cluster_x, cluster_y]    
+    
 
 # MAIN FUNCTIONS
 def generate_edges (df: pd.DataFrame, criterion: str):
@@ -144,8 +159,9 @@ def plot_network (G: nx.Graph, title: str, node_size: int, node_color_attr: str,
     plot = figure(tooltips = HOVER_TOOLTIPS,
                   tools=HOVER_TOOLS, 
                   active_scroll='wheel_zoom',
-                  x_range=Range1d(-1.3, 1.3),
-                  y_range=Range1d(-1.3, 1.3),
+                  x_range=Range1d(-3, 3),
+                  y_range=Range1d(-5, 1.5),
+                  sizing_mode = 'scale_both',
                   title=title)
 
     network_graph = from_networkx(G, nx.fruchterman_reingold_layout(G, seed = 8), scale=8, center=(0, 0))   # potentially remove scale
@@ -156,18 +172,35 @@ def plot_network (G: nx.Graph, title: str, node_size: int, node_color_attr: str,
     network_graph.node_renderer.glyph = Circle(size=node_size, fill_color=linear_cmap(node_color_attr, color_palette, minimum_value_color, maximum_value_color))
     
     #Set edge opacity and width
-    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.5, line_width=1)
+    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.3, line_width=1)
     
-    #Add Labels
+    #Add publication labels
     x, y = zip(*network_graph.layout_provider.graph_layout.values())
     node_labels = list(G.nodes())
     source = ColumnDataSource({'x': x, 'y': y, 'name': [node_labels[i] for i in range(len(x))]})
-    labels = LabelSet(x='x', y='y', text='name', source=source, background_fill_color='white', text_font_size='10px', background_fill_alpha=.7)
-    plot.renderers.append(labels)
+    labels = LabelSet(x='x', y='y', text='name', source=source, background_fill_color='white', text_font_size='12px', background_fill_alpha=.7)
+    #plot.renderers.append(labels)
+    
+    #Add cluster labels
+    cluster_labels_all = network_graph.node_renderer.data_source.data[cluster_criterion.lower().replace(" ", "_")]
+    cluster_labels = list(set(cluster_labels_all))
+    list_clusters = [allocate_clusters(i, x, y, cluster_labels_all) for i in cluster_labels]
+    cluster_names = [i[0] for i in list_clusters]
+    cluster_xs = [i[1] for i in list_clusters]
+    cluster_ys = [i[2] for i in list_clusters]
+    cluster_source = ColumnDataSource({'x': cluster_xs, 'y': cluster_ys, 'name': cluster_names})
+    cluster_labelset = LabelSet(x='x', y='y', text='name', source=cluster_source, background_fill_color='white', text_font_size='20px', background_fill_alpha=0)
+    # plot.renderers.append(cluster_labelset)
 
     #Add network graph to the plot
-    plot.renderers.append(network_graph)
+    #plot.renderers.append(network_graph)
 
+    #Plot all
+    #plot.renderers = []
+    plot.renderers.append(network_graph) 
+    plot.renderers.append(labels)
+    plot.renderers.append(cluster_labelset)
+    
     return plot
 
 def update_plot (attrname, old, new):
@@ -181,29 +214,44 @@ def update_plot (attrname, old, new):
     minimum_value_color = min(network_graph.node_renderer.data_source.data[color_attribute])
     maximum_value_color = max(network_graph.node_renderer.data_source.data[color_attribute])
     network_graph.node_renderer.glyph = Circle(size=node_size, fill_color=linear_cmap(color_attribute, color_palette, minimum_value_color, maximum_value_color))
-    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.5, line_width=1)
-    plot.renderers = []
-    plot.renderers.append(network_graph)    
-    #Add Labels
+    network_graph.edge_renderer.glyph = MultiLine(line_alpha=0.3, line_width=1)
+       
+    # Add Labels
     x, y = zip(*network_graph.layout_provider.graph_layout.values())
     node_labels = list(G.nodes())
     source = ColumnDataSource({'x': x, 'y': y, 'name': [node_labels[i] for i in range(len(x))]})
     labels = LabelSet(x='x', y='y', text='name', source=source, background_fill_color='white', text_font_size='12px', background_fill_alpha=.7)
+    
+    # Add cluster labels
+    cluster_labels_all = network_graph.node_renderer.data_source.data[cluster_criterion.lower().replace(" ", "_")]
+    cluster_labels = list(set(cluster_labels_all))
+    list_clusters = [allocate_clusters(i, x, y, cluster_labels_all) for i in cluster_labels]
+    cluster_names = [i[0] for i in list_clusters]
+    cluster_xs = [i[1] for i in list_clusters]
+    cluster_ys = [i[2] for i in list_clusters]
+    cluster_source = ColumnDataSource({'x': cluster_xs, 'y': cluster_ys, 'name': cluster_names})
+    cluster_labelset = LabelSet(x='x', y='y', text='name', source=cluster_source, background_fill_color='white', text_font_size='20px', background_fill_alpha=0)
+    
+    # Plot all
+    plot.renderers = []
+    plot.renderers.append(network_graph) 
     plot.renderers.append(labels)
+    plot.renderers.append(cluster_labelset)
     
 #***************
 # PROGRAM MAIN
 #***************
 
 # Constants
-NODE_ATTRIBUTES = ['Year', 'Application', 'Materials', 'Nr classes', 'Classes', 'Preprocessing',
-                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification',
+NODE_ATTRIBUTES = ['Year', 'Journal', 'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
+                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classiffication',
                    'Best model', 'Validation internal', 'Validation external', 'Software']
+
+CLUSTERING_CRITERIONS = ['Application', 'Classiffication', 'Software']
 
 HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x != 'Year']
 
-
-HOVER_TOOLS = ["pan,wheel_zoom,save,reset, lasso_select"]
+HOVER_TOOLS = ["pan, box_zoom, wheel_zoom,save,reset"]
 
 SEED = 8
 
@@ -216,7 +264,7 @@ color_palette = Blues8
 # Displayed widget values 
 select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x.replace('_', ' ') for x in NODE_ATTRIBUTES])
 #select_sizing = Select(value=node_size, title='Node size according to:', options=['Constant'])
-select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
+#select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
 
 # Load the data
 df_LIBS = pd.read_csv(join(dirname(__file__),'LIBS_overview_final.csv'), delimiter=';') 
@@ -237,7 +285,7 @@ select_clustering.on_change('value', update_plot)
 #     console.log('select: value=' + this.value, this.toString())
 # """))
 
-controls = column(select_clustering, select_coloring)
+controls = column(select_clustering)
 
 curdoc().add_root(row(plot, controls))
 curdoc().title = "LIBS"
