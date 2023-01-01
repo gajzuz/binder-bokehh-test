@@ -244,10 +244,10 @@ def update_plot (attrname, old, new):
 
 # Constants
 NODE_ATTRIBUTES = ['Year', 'Journal', 'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
-                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classiffication',
+                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification',
                    'Best model', 'Validation internal', 'Validation external', 'Software']
 
-CLUSTERING_CRITERIONS = ['Application', 'Classiffication', 'Software']
+CLUSTERING_CRITERIONS = ['Application', 'Classification', 'Software']
 
 HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x != 'Year']
 
