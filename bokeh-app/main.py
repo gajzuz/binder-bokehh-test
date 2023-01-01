@@ -14,7 +14,7 @@ import networkx as nx
 # Interactive visualizations in browser     
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, ColorBar, CustomJS,  OpenURL, TapTool
+from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, ColorBar, CustomJS,  OpenURL, TapTool, Title
 from bokeh.palettes import Blues8
 from bokeh.plotting import figure, from_networkx
 from bokeh.transform import linear_cmap
@@ -280,6 +280,9 @@ G = create_network(df_LIBS, df_LIBS_edges, NODE_ATTRIBUTES)
 
 # Plot the network
 plot = plot_network(G, plot_title, node_size, color_attribute, color_palette)
+
+# Copyright
+plot.add_layout(Title(text="(c) Zuzana Gajarska 2022", align="left", text_color="gray", text_font_size="10px"), "above")
 
 # Link to external url
 url = "@url"
