@@ -71,12 +71,12 @@ def allocate_clusters (label_cluster: str, x: list, y:list, cluster_labels_all:l
     indices = [i for i in range(len(cluster_labels_all)) if cluster_labels_all[i]==label_cluster]
     range_x = abs(abs(min([x[i] for i in indices])) - abs(max([x[i] for i in indices])))
     if len(indices) == 1:
-        cluster_x = mean([x[i] for i in indices])-0.05
+        cluster_x = mean([x[i] for i in indices])-0.025
     else:
         cluster_x = mean([x[i] for i in indices])-range_x
     range_y = abs(abs(min([y[i] for i in indices])) - abs(max([y[i] for i in indices])))
     if len(indices) == 1:
-        cluster_y = mean([y[i] for i in indices])+0.05
+        cluster_y = mean([y[i] for i in indices])+0.025
     else:
         cluster_y = mean([y[i] for i in indices])+range_y
     return [label_cluster, cluster_x, cluster_y]    
@@ -243,13 +243,16 @@ def update_plot (attrname, old, new):
 #***************
 
 # Constants
-NODE_ATTRIBUTES = ['Year', 'Journal', 'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
-                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
-                   'Best model', 'Validation internal', 'Validation external', 'Software']
+NODE_ATTRIBUTES = ['Year', 'Affiliation', 'Institution',  'Journal', 'Country',  'Application', 'Materials', 'Number of classes', 'Classes', 'Exploratory data analysis', 'Preprocessing',
+                   'Feature selection', 'Feature selection approach',  'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
+                   'Best model', 'Validation internal', 'Validation external', 'Model validation', 'Software']
 
-CLUSTERING_CRITERIONS = ['Application', 'Classification', 'Software']
+CLUSTERING_CRITERIONS = ['Application', 'Journal', 'Country', 'Exploratory data analysis','Feature selection approach',  'Classification', 'Model validation', 'Software']
 
-HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x not in ['Year', 'Classification']]
+HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x in
+                 ['Journal', 'Affiliation',  'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
+                   'Feature selection',  'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
+                   'Best model', 'Validation internal', 'Validation external', 'Software']]
 
 HOVER_TOOLS = ["pan, box_zoom, wheel_zoom,save,reset"]
 
