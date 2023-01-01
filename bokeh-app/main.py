@@ -14,7 +14,7 @@ import networkx as nx
 # Interactive visualizations in browser     
 from bokeh.io import curdoc
 from bokeh.layouts import row, column
-from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, ColorBar, CustomJS
+from bokeh.models import Range1d, Circle, ColumnDataSource, MultiLine, LabelSet, Select, ColorBar, CustomJS,  OpenURL, TapTool
 from bokeh.palettes import Blues8
 from bokeh.plotting import figure, from_networkx
 from bokeh.transform import linear_cmap
@@ -243,7 +243,7 @@ def update_plot (attrname, old, new):
 #***************
 
 # Constants
-NODE_ATTRIBUTES = ['Year', 'Affiliation', 'Institution',  'Journal', 'Country',  'Application', 'Materials', 'Number of classes', 'Classes', 'Exploratory data analysis', 'Preprocessing',
+NODE_ATTRIBUTES = ['url', 'Year', 'Affiliation', 'Institution',  'Journal', 'Country',  'Application', 'Materials', 'Number of classes', 'Classes', 'Exploratory data analysis', 'Preprocessing',
                    'Feature selection', 'Feature selection approach',  'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
                    'Best model', 'Validation internal', 'Validation external', 'Model validation', 'Software']
 
@@ -254,7 +254,7 @@ HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "
                    'Feature selection',  'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
                    'Best model', 'Validation internal', 'Validation external', 'Software']]
 
-HOVER_TOOLS = ["pan, box_zoom, wheel_zoom,save,reset"]
+HOVER_TOOLS = ["pan, tap, box_zoom, wheel_zoom,save,reset"]
 
 SEED = 8
 
@@ -280,6 +280,11 @@ G = create_network(df_LIBS, df_LIBS_edges, NODE_ATTRIBUTES)
 
 # Plot the network
 plot = plot_network(G, plot_title, node_size, color_attribute, color_palette)
+
+# Link to external url
+url = "@url"
+taptool = plot.select(type=TapTool)
+taptool.callback = OpenURL(url=url)
 
 select_clustering.on_change('value', update_plot)
 
