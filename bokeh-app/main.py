@@ -262,7 +262,7 @@ color_attribute = 'year'
 color_palette = Blues8
 
 # Displayed widget values 
-select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x.replace('_', ' ') for x in NODE_ATTRIBUTES])
+select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x.replace('_', ' ') for x in CLUSTERING_CRITERIONS])
 #select_sizing = Select(value=node_size, title='Node size according to:', options=['Constant'])
 #select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
 
