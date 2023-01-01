@@ -4,7 +4,7 @@
 from os.path import join, dirname
 
 # Data wrangling
-from statistics import mean
+from scipy import mean
 import pandas as pd
 
 # Network graph 
