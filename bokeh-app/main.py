@@ -244,12 +244,12 @@ def update_plot (attrname, old, new):
 
 # Constants
 NODE_ATTRIBUTES = ['Year', 'Journal', 'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
-                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification',
+                   'Feature selection', 'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
                    'Best model', 'Validation internal', 'Validation external', 'Software']
 
 CLUSTERING_CRITERIONS = ['Application', 'Classification', 'Software']
 
-HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x != 'Year']
+HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x not in ['Year', 'Classification']]
 
 HOVER_TOOLS = ["pan, box_zoom, wheel_zoom,save,reset"]
 
@@ -264,7 +264,7 @@ color_palette = Blues8
 # Displayed widget values 
 select_clustering = Select(value=cluster_criterion, title='Cluster according to:', options=[x.replace('_', ' ') for x in CLUSTERING_CRITERIONS])
 #select_sizing = Select(value=node_size, title='Node size according to:', options=['Constant'])
-#select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
+select_coloring = Select(value=color_attribute, title='Node color according to:', options=['Year'])
 
 # Load the data
 df_LIBS = pd.read_csv(join(dirname(__file__),'LIBS_overview_final.csv'), delimiter=';') 
@@ -285,7 +285,7 @@ select_clustering.on_change('value', update_plot)
 #     console.log('select: value=' + this.value, this.toString())
 # """))
 
-controls = column(select_clustering)
+controls = column(select_clustering, select_coloring)
 
 curdoc().add_root(row(plot, controls))
 curdoc().title = "LIBS"
