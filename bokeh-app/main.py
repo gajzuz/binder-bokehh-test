@@ -247,7 +247,7 @@ NODE_ATTRIBUTES = ['url', 'Year', 'Affiliation', 'Institution',  'Journal', 'Cou
                    'Feature selection', 'Feature selection approach',  'Spectral input', 'Classification approaches', 'Classification', 'Classifier',
                    'Best model', 'Validation internal', 'Validation external', 'Model validation', 'Software']
 
-CLUSTERING_CRITERIONS = ['Application', 'Journal', 'Country', 'Exploratory data analysis','Feature selection approach',  'Classification', 'Model validation', 'Software']
+CLUSTERING_CRITERIONS = ['Application', 'Journal', 'Exploratory data analysis','Feature selection approach',  'Classification', 'Model validation', 'Software']
 
 HOVER_TOOLTIPS = [("Publication", "@index")] + [(x, '@'+x.lower().replace(" ", "_")) for x in NODE_ATTRIBUTES if x in
                  ['Journal', 'Affiliation',  'Application', 'Materials', 'Number of classes', 'Classes', 'Preprocessing',
